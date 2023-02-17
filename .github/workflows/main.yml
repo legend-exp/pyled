@@ -6,7 +6,12 @@ on:
       - main
       - 'releases/**'
   pull_request:
+  merge_group:
   release:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
 
