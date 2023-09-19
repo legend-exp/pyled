@@ -13,6 +13,3 @@
 An event viewer for the LEGEND experiment.
 
 _Work in progress..._
-
-<sub>_This Python package layout is based on
-[pyproject-template](https://github.com/gipert/pyproject-template)._</sub>
