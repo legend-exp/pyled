@@ -77,7 +77,12 @@ class Waveform_window(QWidget):
 
     def __init__(self, browsers, ev):
         super().__init__()
-        uic.loadUi(os.path.join(os.path.dirname(__file__,"layouts/legend_waveform_display.ui")), self)
+        uic.loadUi(
+            os.path.join(
+                os.path.dirname(__file__, "layouts/legend_waveform_display.ui")
+            ),
+            self,
+        )
         self.browsers = browsers
         self.ev = ev
 
@@ -148,7 +153,10 @@ class MainWindow(QtWidgets.QMainWindow):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        uic.loadUi(os.path.join(os.path.dirname(__file__,"layouts/legend_event_display2.ui")), self)
+        uic.loadUi(
+            os.path.join(os.path.dirname(__file__, "layouts/legend_event_display2.ui")),
+            self,
+        )
         # Create the maptlotlib FigureCanvas object,
         # which defines a single set of axes as self.axes.
         self.canvas = MplCanvas(self, width=10, height=10, dpi=100)
