@@ -1,19 +1,19 @@
 from __future__ import annotations
 
-import glob
 import math
-import os
+import pathlib
 
 import lgdo.lh5_store as lh5
 import matplotlib as mpl
+import matplotlib.pyplot as plt
 import numpy as np
 from legendmeta import LegendMetadata
 from legendmeta.catalog import Props
+from matplotlib.collections import PatchCollection
+
+from leds.utils import sorter
 
 mpl.use("Qt5Agg")
-import matplotlib.pyplot as plt
-from matplotlib.collections import PatchCollection
-from utils import *
 
 sto = lh5.LH5Store()
 
@@ -174,41 +174,41 @@ def get_plot_source_and_xlabels(chan_dict, channel_map, strings_dict, Î”R=160, Î
     return xs, ys
 
 
-def plt_detector_plot(
-    fig, axes, patches, display_dict, ctitle="", plot_title="LEGEND event view"
-):
-    minvalue = 25
-    maxvalue = 6000
+# def plt_detector_plot(
+#     axes, patches, display_dict, ctitle="", plot_title="LEGEND event view"
+# ):
+#     minvalue = 25
+#     maxvalue = 4000
 
-    cNorm = mpl.colors.Normalize(vmin=25, vmax=4000)
-    vir = mpl.colormaps["viridis"]
-    vir.set_under("grey")
-    vir.set_bad("white")
+#     cNorm = mpl.colors.Normalize(vmin=minvalue, vmax=maxvalue)
+#     vir = mpl.colormaps["viridis"]
+#     vir.set_under("grey")
+#     vir.set_bad("white")
 
-    cNorm = mpl.colors.Normalize(vmin=25, vmax=4000)
+#     cNorm = mpl.colors.Normalize(vmin=minvalue, vmax=maxvalue)
 
-    p = PatchCollection(patches, cmap=vir)
-    p.set_array(
-        np.array(
-            [np.nan if v is None or math.isnan(v) else v for v in display_dict.values()]
-        )
-    )
-    p.set_ec("black")
-    p.set_norm(cNorm)
+#     p = PatchCollection(patches, cmap=vir)
+#     p.set_array(
+#         np.array(
+#             [np.nan if v is None or math.isnan(v) else v for v in display_dict.values()]
+#         )
+#     )
+#     p.set_ec("black")
+#     p.set_norm(cNorm)
 
-    axes.add_collection(p)
-    axes.spines["top"].set_visible(False)
-    axes.spines["bottom"].set_visible(False)
-    axes.spines["right"].set_visible(False)
-    axes.spines["left"].set_visible(False)
+#     axes.add_collection(p)
+#     axes.spines["top"].set_visible(False)
+#     axes.spines["bottom"].set_visible(False)
+#     axes.spines["right"].set_visible(False)
+#     axes.spines["left"].set_visible(False)
 
-    # if fig.first_call == True:
-    plt.colorbar(p, ax=axes, label=ctitle)
-    axes.set_xlim([-100, 1500])
-    axes.set_ylim([-1200, 30])
-    axes.set_title(plot_title)
-    axes.set_yticks([])
-    axes.set_xticks([])
+#     # if fig.first_call == True:
+#     plt.colorbar(p, ax=axes, label=ctitle)
+#     axes.set_xlim([-100, 1500])
+#     axes.set_ylim([-1200, 30])
+#     axes.set_title(plot_title)
+#     axes.set_yticks([])
+#     axes.set_xticks([])
 
 
 class event_viewer:
@@ -216,7 +216,7 @@ class event_viewer:
         self.fig = fig
         self.prod_cycle = "/data2/public/prodenv/prod-blind/ref/v01.06"  # os.cwd()
         self.config = Props.read_from(
-            os.path.join(self.prod_cycle, "config.json"),
+            str(pathlib.Path(self.prod_cycle) / "config.json"),
             subst_pathvar={"$": self.prod_cycle},
         )["setups"]["l200"]["paths"]
         self.meta = LegendMetadata(self.config["metadata"])
@@ -226,17 +226,22 @@ class event_viewer:
         self.baseline_channels = {}
 
     def get_phy_event_position(self, period, run, file_tstamp, idx):
-        file_path = os.path.join(
-            self.config["tier_hit"],
-            f"phy/{period}/{run}/l200-{period}-{run}-phy-{file_tstamp}-tier_hit.lh5",
+        file_path = pathlib.Path(self.config["tier_hit"])
+
+        files = sorted(
+            [
+                str(file)
+                for file in file_path.glob(
+                    f"phy/{period}/{run}/l200-{period}-{run}-phy-{file_tstamp}-tier_hit.lh5"
+                )
+            ]
         )
-        files = sorted(glob.glob(file_path))
         events_per_file = []
         for file in files:
             if file in list(self.events_per_file_cache):
                 events_per_file.append(self.events_per_file_cache[file])
             else:
-                _, per, _, _, tstamp, _ = os.path.basename(file).split("-")
+                _, per, _, _, tstamp, _ = str(pathlib.Path(file).name).split("-")
                 if per not in list(self.baseline_channels):
                     self.baseline_channels[per] = self.meta.channelmap(tstamp)[
                         "BSLN01"
@@ -275,7 +280,9 @@ class event_viewer:
             self.hit_file,
             self.index,
         ) = self.get_phy_event_position(period, run, file_tstamp, idx)
-        self.chmap = self.meta.channelmap(os.path.basename(self.hit_file).split("-")[4])
+        self.chmap = self.meta.channelmap(
+            str(pathlib.Path(self.hit_file).name).split("-")[4]
+        )
         self.dets = self.chmap.map("system", unique=False).geds.map("name")
         self.working_dets = [
             det
@@ -303,16 +310,19 @@ class event_viewer:
         self._get_event(period, run, file_tstamp, idx)
 
         strings_dict, chan_dict, channel_map = sorter(
-            self.prod_cycle, os.path.basename(self.hit_file).split("-")[4]
+            self.prod_cycle, str(pathlib.Path(self.hit_file).name).split("-")[4]
         )
         if strings_dict == self.strings_dict:
             self.p.set_array(
                 np.array(
-                    [np.nan if v is None or math.isnan(v) else v for v in self.energy_dict.values()]
+                    [
+                        np.nan if v is None or math.isnan(v) else v
+                        for v in self.energy_dict.values()
+                    ]
                 )
             )
             self.axes.set_title(
-                f'file:{os.path.basename(self.hit_file).split("-tier")[0]} idx:{self.index}'
+                f'file:{str(pathlib.Path(self.hit_file).name).split("-tier")[0]} idx:{self.index}'
             )
         else:
             self.strings_dict = strings_dict
@@ -331,7 +341,7 @@ class event_viewer:
             self.plt_detector_plot(
                 patches,
                 ctitle="energy (keV)",
-                plot_title=f'file:{os.path.basename(self.hit_file).split("-tier")[0]} idx:{self.index}',
+                plot_title=f'file:{str(pathlib.Path(self.hit_file).name).split("-tier")[0]} idx:{self.index}',
             )
         self.fig.canvas.draw()
 
@@ -339,17 +349,20 @@ class event_viewer:
         minvalue = 25
         maxvalue = 6000
 
-        cNorm = mpl.colors.Normalize(vmin=25, vmax=4000)
+        cNorm = mpl.colors.Normalize(vmin=minvalue, vmax=maxvalue)
         vir = mpl.colormaps["viridis"]
         vir.set_under("grey")
         vir.set_bad("white")
 
-        cNorm = mpl.colors.Normalize(vmin=25, vmax=4000)
+        cNorm = mpl.colors.Normalize(vmin=minvalue, vmax=maxvalue)
 
         self.p = PatchCollection(patches, cmap=vir)
         self.p.set_array(
             np.array(
-                [np.nan if v is None or math.isnan(v) else v for v in self.energy_dict.values()]
+                [
+                    np.nan if v is None or math.isnan(v) else v
+                    for v in self.energy_dict.values()
+                ]
             )
         )
         self.p.set_ec("black")

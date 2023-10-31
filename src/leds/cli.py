@@ -2,8 +2,9 @@ from __future__ import annotations
 
 import sys
 
-from core import MainWindow
 from PyQt5 import QtWidgets
+
+from leds.core import MainWindow
 
 
 def leds_cli() -> None:

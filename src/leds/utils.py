@@ -1,13 +1,13 @@
 from __future__ import annotations
 
-import os
+import pathlib
 
 from legendmeta import LegendMetadata
 from legendmeta.catalog import Props
 
 
 def sorter(path, timestamp, key="String", datatype="cal", spms=False):
-    prod_config = os.path.join(path, "config.json")
+    prod_config = str(pathlib.Path(path) / "config.json")
     prod_config = Props.read_from(prod_config, subst_pathvar=True)["setups"]["l200"]
 
     cfg_file = prod_config["paths"]["metadata"]

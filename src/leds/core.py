@@ -2,14 +2,13 @@ from __future__ import annotations
 
 import contextlib
 import os
+import pathlib
 import time
-from pathlib import Path
 
 import boost_histogram as bh
 import matplotlib as mpl
 import matplotlib.pyplot as plt
 import numpy as np
-from event_viewer import event_viewer
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg
 from PyQt5 import QtWidgets, uic
 from PyQt5.QtCore import QThread
@@ -18,7 +17,9 @@ from PyQt5.QtWidgets import (
     QVBoxLayout,
     QWidget,
 )
-from waveform_browse import (
+
+from leds.event_viewer import event_viewer
+from leds.waveform_browse import (
     event_waveform_browser,
     getBrowsers,
     plot_event_compressed,
@@ -41,7 +42,7 @@ class ehist_window(QWidget):
     def __init__(self, ev):
         super().__init__()
         self.ev = ev
-        self.canvas = MplCanvas(self, width=10, height=10, dpi=100)
+        self.canvas = MplCanvas(width=10, height=10, dpi=100)
         layout = QVBoxLayout()
         layout.addWidget(self.canvas)
         self.setLayout(layout)
@@ -78,9 +79,7 @@ class Waveform_window(QWidget):
     def __init__(self, browsers, ev):
         super().__init__()
         uic.loadUi(
-            os.path.join(
-                os.path.dirname(__file__, "layouts/legend_waveform_display.ui")
-            ),
+            str(pathlib.Path(__file__).parent / "layouts/legend_waveform_display.ui"),
             self,
         )
         self.browsers = browsers
@@ -88,7 +87,7 @@ class Waveform_window(QWidget):
 
         # Create the maptlotlib FigureCanvas object,
         # which defines a single set of axes as self.axes.
-        self.canvas = MplCanvas(self, width=10, height=10, dpi=100)
+        self.canvas = MplCanvas(width=10, height=10, dpi=100)
         self.update_strings()
         self.param_select.addItems(["wf_blsub", "wf_pz", "wf_trap", "curr"])
 
@@ -127,7 +126,7 @@ class Waveform_window(QWidget):
         self.browsers.get_browsers()
         for i in reversed(range(self.plot.count())):
             self.plot.itemAt(i).widget().setParent(None)
-        self.canvas = MplCanvas(self, width=10, height=10, dpi=100)
+        self.canvas = MplCanvas(width=10, height=10, dpi=100)
         self.plot.addWidget(self.canvas)
         if self.exploded is False:
             plot_event_compressed(
@@ -154,12 +153,12 @@ class MainWindow(QtWidgets.QMainWindow):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         uic.loadUi(
-            os.path.join(os.path.dirname(__file__, "layouts/legend_event_display2.ui")),
+            str(pathlib.Path(__file__).parent / "layouts/legend_event_display2.ui"),
             self,
         )
         # Create the maptlotlib FigureCanvas object,
         # which defines a single set of axes as self.axes.
-        self.canvas = MplCanvas(self, width=10, height=10, dpi=100)
+        self.canvas = MplCanvas(width=10, height=10, dpi=100)
         self.ev = event_viewer(self.canvas.fig)
         self.wf_browsers = event_waveform_browser(self.ev)
 
@@ -184,7 +183,7 @@ class MainWindow(QtWidgets.QMainWindow):
     def get_possible_periods(self):
         hit_path = self.ev.config["tier_hit"]
         pers = ["*"]
-        pers += sorted(os.listdir(Path(hit_path) / "phy"))
+        pers += sorted(os.listdir(pathlib.Path(hit_path) / "phy"))
         return pers
 
     def update_runs(self, s):
@@ -192,7 +191,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.run_select.clear()
         hit_path = self.ev.config["tier_hit"]
         runs = ["*"]
-        runs += sorted(os.listdir(Path(hit_path) / "phy" / s))
+        runs += sorted(os.listdir(pathlib.Path(hit_path) / "phy" / s))
         self.run_select.addItems(runs)
 
     def update_cycles(self, s):
@@ -209,7 +208,7 @@ class MainWindow(QtWidgets.QMainWindow):
                     [
                         file.split("-")[4]
                         for file in os.listdir(
-                            Path(hit_path)
+                            pathlib.Path(hit_path)
                             / "phy"
                             / self.period_select.currentText()
                             / s

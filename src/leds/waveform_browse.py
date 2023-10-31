@@ -1,17 +1,16 @@
 from __future__ import annotations
 
 import math
-import os
+import pathlib
 
 import lgdo.lh5_store as lh5
 import matplotlib as mpl
-import numpy as np
-
-mpl.use("Qt5Agg")
 import matplotlib.pyplot as plt
+import numpy as np
 from dspeed.vis import WaveformBrowser
 from PyQt5.QtCore import QObject, pyqtSignal
-from utils import *
+
+mpl.use("Qt5Agg")
 
 
 def plot_string_compressed(fig, ax, ev, browsers, line_parameter="wf_blsub", string=1):
@@ -88,9 +87,7 @@ def plot_string_compressed(fig, ax, ev, browsers, line_parameter="wf_blsub", str
     # fig.canvas.draw()
 
 
-def plot_above_threshold_compressed(
-    fig, ax, ev, browsers, line_parameter="wf_blsub", string=1
-):
+def plot_above_threshold_compressed(fig, ax, ev, browsers, line_parameter="wf_blsub"):
     def onpick(event, lined):
         legline = event.artist
         if event.mouseevent.dblclick:
@@ -337,9 +334,7 @@ def plot_string_exploded(fig, ev, browsers, line_parameter="wf_blsub", string=1)
     fig.tight_layout()
 
 
-def plot_above_threshold_exploded(
-    fig, ev, browsers, line_parameter="wf_blsub", string=1
-):
+def plot_above_threshold_exploded(fig, ev, browsers, line_parameter="wf_blsub"):
     dets = [
         det
         for det, energy in ev.energy_dict.items()
@@ -514,7 +509,7 @@ class spoof_iterator:
         self.current_entry = np.nan
         self.n_rows = 1
 
-    def read(self, entry):
+    def read(self, entry):  # noqa: ARG002
         self.lh5_buffer, n_rows = self.sto.read_object(
             f"{self.channel}/raw", self.ev.raw_file, start_row=self.ev.index, n_rows=1
         )
@@ -546,7 +541,7 @@ class event_waveform_browser:
     def get_browsers(self):
         channels = [f"ch{self.ev.chmap[det].daq.rawid}" for det in self.ev.working_dets]
         dataprod_config = self.ev.meta.dataprod.config.on(
-            os.path.basename(self.file).split("-")[4]
+            str(pathlib.Path(self.file).name).split("-")[4]
         )
         dsp_configs = dataprod_config["snakemake_rules"]["tier_dsp"]["inputs"][
             "processing_chain"
