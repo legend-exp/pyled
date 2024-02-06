@@ -7,6 +7,7 @@ build-backend = "setuptools.build_meta"
 name = "leds"
 authors = [
   { name = "Luigi Pertoldi", email = "gipert@pm.me" },
+  { name = "George Marshall", email = "george.marshall.20@ucl.ac.uk" },
 ]
 description = "LEGEND Event Display"
 readme = "README.md"
@@ -31,7 +32,10 @@ classifiers = [
 dynamic = ["version"]
 dependencies = [
   "pygama",
-  "pyqtgraph"
+  "pyqtgraph",
+  "pyqt5",
+  "boost-histogram",
+  "pylegendmeta"
 ]
 
 [project.scripts]
